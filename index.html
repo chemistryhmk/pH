@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Опер-експертиза: Встановлення точності</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #1a1714;
+      background-image: radial-gradient(#332b23 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: #e8e2d9;
+    }
+    
+    .font-detective {
+      font-family: 'Courier Prime', monospace;
+    }
+
+    .font-stamp {
+      font-family: 'Special Elite', cursive;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #241e18;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #4a3d2f;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #73604b;
+    }
+
+    /* Card active focus transitions */
+    .option-card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .option-card:hover {
+      transform: translateY(-2px);
+    }
+
+    /* REALISTIC LAB DIP ANIMATIONS */
+    @keyframes dip-down {
+      0% { transform: translateY(-70px) scale(0.9); opacity: 0; }
+      50% { transform: translateY(18px) scale(1.02); opacity: 1; }
+      70% { transform: translateY(12px) scale(1); opacity: 1; }
+      100% { transform: translateY(15px) scale(1); opacity: 1; }
+    }
+    .anim-dip-probe {
+      animation: dip-down 1.2s ease-out forwards;
+    }
+
+    /* Chemical indicator paper color transformation inside liquid */
+    @keyframes paper-color-soak {
+      0% { background-color: #eab308; } /* Yellow paper initial */
+      100% { filter: brightness(1.1); }
+    }
+    .anim-paper-soak {
+      animation: paper-color-soak 0.8s 0.6s ease-in-out forwards;
+    }
+
+    /* Digital meter screen power-on pulse */
+    @keyframes lcd-read {
+      0% { opacity: 0.2; }
+      50% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+    .anim-lcd-read {
+      animation: lcd-read 0.5s 0.8s ease-in forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-3 md:p-6 select-none">
+
+  <!-- HEADER BAR -->
+  <header class="max-w-6xl w-full mx-auto mb-4 bg-amber-950/40 border-2 border-amber-800/50 rounded-xl p-4 backdrop-blur-md shadow-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+    <div class="flex items-center gap-3">
+      <div class="p-3 bg-amber-900/60 border border-amber-700/60 rounded-lg text-amber-400">
+        <i class="fa-solid fa-microscope text-3xl"></i>
+      </div>
+      <div>
+        <div class="text-xs uppercase tracking-widest text-amber-500/80 font-semibold">Справа № 9 • Симулятор Точності</div>
+        <h1 class="text-xl md:text-2xl font-bold font-detective text-amber-100 flex items-center gap-2">
+          Опер-експертиза: Встановлення точності
+        </h1>
+      </div>
+    </div>
+
+    <!-- Counters -->
+    <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+      <div class="bg-black/50 border border-amber-900/40 px-4 py-2 rounded-lg flex items-center gap-3">
+        <i class="fa-solid fa-clipboard-check text-amber-500"></i>
+        <div>
+          <div class="text-[10px] uppercase text-stone-400">Пройдено ситуацій</div>
+          <div class="text-lg font-bold font-detective text-amber-200" id="progress-indicator">1 / 8</div>
+        </div>
+      </div>
+
+      <div class="bg-black/50 border border-amber-900/40 px-4 py-2 rounded-lg flex items-center gap-3">
+        <i class="fa-solid fa-award text-amber-500"></i>
+        <div>
+          <div class="text-[10px] uppercase text-stone-400">Очки Експерта</div>
+          <div class="text-lg font-bold font-detective text-emerald-400" id="score-indicator">0</div>
+        </div>
+      </div>
+
+      <button id="btn-restart" title="Перезапустити експертизу" class="p-3 bg-stone-800 hover:bg-amber-900 text-stone-300 hover:text-amber-200 border border-stone-700 rounded-lg transition-colors">
+        <i class="fa-solid fa-rotate-right"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN SIMULATOR CONTAINER -->
+  <main class="max-w-6xl w-full mx-auto flex-grow flex flex-col gap-6">
+
+    <!-- ARSENAL DISPLAY CARDS -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      <!-- TOOL 1: PAPER -->
+      <div class="bg-amber-950/20 border border-amber-900/40 rounded-xl p-3 flex items-center gap-3">
+        <div class="p-3 bg-amber-900/40 border border-amber-700/50 rounded-lg text-amber-400">
+          <i class="fa-solid fa-note-sticky text-2xl"></i>
+        </div>
+        <div>
+          <div class="font-bold font-detective text-amber-200 text-sm">Інструмент А: Паперовий агент</div>
+          <div class="text-xs text-amber-400/80">Універсальний папір • Попольові умови • Точність ± 0.5</div>
+        </div>
+      </div>
+
+      <!-- TOOL 2: DIGITAL PH METER -->
+      <div class="bg-blue-950/20 border border-blue-900/40 rounded-xl p-3 flex items-center gap-3">
+        <div class="p-3 bg-blue-900/40 border border-blue-700/50 rounded-lg text-blue-400">
+          <i class="fa-solid fa-gauge-high text-2xl"></i>
+        </div>
+        <div>
+          <div class="font-bold font-detective text-blue-200 text-sm">Інструмент Б: Електронний викривач</div>
+          <div class="text-xs text-blue-400/80">Цифровий pH-метр • Лабораторія/Реанімація • Точність ± 0.01</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ACTIVE SCENARIO CASE FILE -->
+    <section id="case-card" class="bg-stone-900/90 border-2 border-amber-800/60 rounded-2xl p-6 shadow-2xl flex-grow flex flex-col justify-between relative overflow-hidden">
+      
+      <!-- Top Dossier Ribbon -->
+      <div class="flex justify-between items-start border-b border-stone-800 pb-4 mb-4">
+        <div>
+          <span class="text-xs uppercase font-semibold text-amber-500 tracking-widest font-detective" id="case-category">
+            ГАТУНОК СТИХІЇ: СІЛЬСЬКЕ ГОСПОДАРСТВО
+          </span>
+          <h2 class="text-xl md:text-2xl font-bold text-amber-100 font-detective mt-1" id="case-title">
+            Операція 1: Перевірка ґрунту перед посіву
+          </h2>
+        </div>
+        <span class="text-xs font-mono font-bold px-3 py-1 bg-amber-950 text-amber-300 border border-amber-800 rounded-full" id="case-tag">
+          Справа #1/8
+        </span>
+      </div>
+
+      <!-- Case Description & Scenario Details -->
+      <div class="my-auto space-y-4">
+        <div class="p-4 bg-stone-950/80 border border-stone-800 rounded-xl text-stone-300 text-sm md:text-base leading-relaxed" id="case-description">
+          Агроном проводить польовий огляд ділянки. Потрібно швидко дізнатися, чи орієнтовний pH ґрунту падає нижче 5.5, щоб прийняти рішення про внесення крейди.
+        </div>
+
+        <!-- LAB INTERACTIVE TESTING ZONE (FLASK & TOOL PROBE) -->
+        <div class="bg-stone-950 p-4 rounded-xl border border-amber-900/40 flex flex-col md:flex-row items-center justify-around gap-6 relative min-h-[220px] overflow-hidden">
+          
+          <!-- Sample Flask Visual & Liquid -->
+          <div class="flex items-center gap-4 z-10">
+            <div class="relative w-24 h-36 bg-stone-900/80 border-2 border-stone-500/60 rounded-b-3xl overflow-hidden flex items-end justify-center shadow-2xl">
+              
+              <!-- DIPPED INSTRUMENT CONTAINER (ANIMATED DOWNWARDS INTO FLASK) -->
+              <div id="dipped-instrument-container" class="absolute inset-0 z-20 flex items-end justify-center pb-2 pointer-events-none opacity-0">
+                <!-- Dynamic SVG / HTML probe is inserted here -->
+              </div>
+
+              <!-- Liquid in Flask -->
+              <div id="flask-liquid" class="w-full h-2/3 bg-amber-500/20 transition-all duration-500 relative z-10">
+                <div class="absolute inset-x-0 top-0 h-1.5 bg-white/40 animate-pulse"></div>
+              </div>
+              
+              <!-- Flask Graduations -->
+              <div class="absolute left-1 top-10 bottom-4 flex flex-col justify-between text-[9px] font-mono text-stone-500 z-10">
+                <span>100ml</span>
+                <span>50ml</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs uppercase text-amber-500 font-bold font-detective">Досліджуваний зразок</div>
+              <div id="sample-name" class="font-bold text-amber-100 text-base">Витяжка ґрунту</div>
+              <div id="sample-status" class="text-xs text-stone-400 italic mt-1 max-w-[200px]">Очікує вибору інструмента для занурення...</div>
+            </div>
+          </div>
+
+          <!-- Interactive Probe Status / Manual Inspection Zone -->
+          <div id="interactive-probe-zone" class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-stone-800 rounded-xl min-w-[240px] bg-stone-900/60 z-10">
+            <div id="probe-visual" class="text-stone-600 text-3xl mb-2">
+              <i class="fa-solid fa-vial-virus"></i>
+            </div>
+            <div id="probe-text" class="text-xs font-detective text-stone-400 text-center">
+              Оберіть інструмент «А» або «Б» нижче для проведення занурення
+            </div>
+            <!-- MANUAL NEXT STEP BUTTON (Appears only after user observes testing) -->
+            <button id="btn-manual-verdict" onclick="app.showVerdictModal()" class="mt-3 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-black font-bold font-detective text-xs rounded-lg shadow-lg transition-all hidden flex items-center gap-2">
+              <span>Ознайомитися з вердиктом</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+        </div>
+
+        <div class="p-3 bg-amber-950/30 border border-amber-900/30 rounded-lg text-amber-200/90 text-xs flex items-center gap-2" id="case-requirement">
+          <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+          <span>Вимога до операції: Швидке експрес-оцінювання у відкритому полі.</span>
+        </div>
+      </div>
+
+      <!-- DECISION CHOICE BUTTONS -->
+      <div class="mt-6 pt-4 border-t border-stone-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        <button id="btn-choice-paper" onclick="app.makeChoice('paper')" class="option-card p-4 bg-stone-800 hover:bg-amber-900/50 border-2 border-stone-700 hover:border-amber-500 rounded-xl text-left flex items-center gap-3 transition-all group">
+          <div class="w-10 h-10 rounded-lg bg-amber-900/60 border border-amber-600 flex items-center justify-center text-amber-300 font-bold shrink-0">
+            А
+          </div>
+          <div>
+            <div class="font-bold text-amber-100 text-sm group-hover:text-amber-300">Занурити Універсальний Індикатор</div>
+            <div class="text-[11px] text-stone-400">Швидкий колірний тест (Точність ± 0.5)</div>
+          </div>
+        </button>
+
+        <button id="btn-choice-meter" onclick="app.makeChoice('meter')" class="option-card p-4 bg-stone-800 hover:bg-blue-900/50 border-2 border-stone-700 hover:border-blue-500 rounded-xl text-left flex items-center gap-3 transition-all group">
+          <div class="w-10 h-10 rounded-lg bg-blue-900/60 border border-blue-600 flex items-center justify-center text-blue-300 font-bold shrink-0">
+            Б
+          </div>
+          <div>
+            <div class="font-bold text-blue-100 text-sm group-hover:text-blue-300">Занурити Електрод pH-метра</div>
+            <div class="text-[11px] text-stone-400">Прецизійний цифровий тест (Точність ± 0.01)</div>
+          </div>
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FEEDBACK / EXPLANATION MODAL -->
+  <div id="feedback-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-stone-900 border-2 border-amber-800/80 max-w-2xl w-full rounded-2xl shadow-2xl p-6 relative">
+      
+      <!-- Result Stamp Badge -->
+      <div class="flex justify-between items-start mb-4 border-b border-stone-800 pb-3">
+        <div>
+          <span class="text-xs uppercase font-semibold text-amber-500 tracking-widest font-detective">Вердикт Головного Слідчого</span>
+          <h3 class="text-xl font-bold font-detective text-amber-100" id="feedback-title">ОЦІНКА ОПЕРАЦІЇ</h3>
+        </div>
+        <div id="feedback-stamp" class="font-stamp text-lg px-3 py-1 border-2 rounded tracking-wider uppercase">
+          ВЕРДИКТ
+        </div>
+      </div>
+
+      <!-- Explanation Text -->
+      <div class="p-4 bg-stone-950 rounded-xl border border-stone-800 text-sm text-stone-300 leading-relaxed mb-6 space-y-2" id="feedback-body">
+        <!-- Explanation content -->
+      </div>
+
+      <!-- Action Button -->
+      <div class="flex justify-end">
+        <button id="btn-next" class="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-black font-extrabold font-detective rounded-xl transition-all flex items-center gap-2 pulse-btn">
+          <span>НАСТУПНА СПРАВА</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FINAL SUMMARY REPORT MODAL -->
+  <div id="summary-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-stone-900 border-2 border-amber-800/80 max-w-3xl w-full rounded-2xl shadow-2xl p-6 relative my-8">
+      
+      <div class="text-center border-b border-stone-800 pb-4 mb-6">
+        <div class="p-3 bg-amber-900/40 w-16 h-16 rounded-full border border-amber-600 flex items-center justify-center text-amber-400 mx-auto mb-3">
+          <i class="fa-solid fa-award text-3xl"></i>
+        </div>
+        <span class="text-xs uppercase font-semibold text-amber-500 tracking-widest font-detective">Підсумковий атестаційний протокол</span>
+        <h2 class="text-2xl font-bold font-detective text-amber-100">ЕКСПЕРТИЗА ТОЧНОСТІ ЗАВЕРШЕНА</h2>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-2 gap-4 mb-6 bg-stone-950 p-4 rounded-xl border border-stone-800 text-center">
+        <div>
+          <div class="text-xs text-stone-400 uppercase">Підсумковий бал</div>
+          <div id="summary-score" class="text-3xl font-bold font-detective text-emerald-400">0 / 8</div>
+        </div>
+        <div>
+          <div class="text-xs text-stone-400 uppercase">Рівень кваліфікації</div>
+          <div id="summary-rank" class="text-xl font-bold font-detective text-amber-400 mt-1">ЕКСПЕРТ</div>
+        </div>
+      </div>
+
+      <div class="space-y-3 max-h-60 overflow-y-auto pr-2 mb-6" id="summary-list">
+        <!-- Breakdown list -->
+      </div>
+
+      <div class="flex justify-center border-t border-stone-800 pt-4">
+        <button onclick="location.reload()" class="px-8 py-3 bg-amber-600 hover:bg-amber-500 text-black font-extrabold font-detective rounded-xl transition-all">
+          <i class="fa-solid fa-rotate-right mr-2"></i> ПРОЙТИ КВАЛІФІКАЦІЮ ЗНОВУ
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // DATA: 8 Rich Real-life & Laboratory Scenarios with actual pH values and lab liquid colors
+    const SCENARIOS = [
+      {
+        id: 1,
+        category: "ГАТУНОК СТИХІЇ: СІЛЬСЬКЕ ГОСПОДАРСТВО",
+        title: "Операція 1: Перевірка ґрунту у відкритому полі",
+        sampleName: "Водна витяжка ґрунту",
+        exactPH: "5.2",
+        paperColor: "bg-amber-500 text-black", // Color indicator match
+        description: "Агроном проводить польовий огляд ділянки під садіння картоплі. Потрібно експрес-методом з'ясувати, чи є ґрунт надто кислим (pH < 5.5), щоб вирішити, чи проводити вапнування крейдою.",
+        requirement: "Польові умови, швидке оцінювання без джерела електроживлення.",
+        correctChoice: "paper",
+        explanation: "<b>Правильний вибір: Паперовий індикатор!</b><br>У відкритому полі для ухвалення рішення про вапнування цілком достатньо приблизного вимірювання (±0.5). Немає потреби носити крихкий електронний прилад та калібрувальні розчини."
+      },
+      {
+        id: 2,
+        category: "ГАТУНОК СТИХІЇ: КЛІНІЧНА МЕДИЦИНА",
+        title: "Операція 2: Реанімаційний аналіз плазми крові",
+        sampleName: "Плазма крові пацієнта",
+        exactPH: "7.18",
+        paperColor: "bg-emerald-600 text-white",
+        description: "Пацієнт потрапив до відділення інтенсивної терапії з підозрою на діабетичний ацидоз. Норма pH крові становить 7.35–7.45. Відхилення pH нижче 7.10 створює смертельну загрозу для життя.",
+        requirement: "Найвища точність! Межа між нормою та катастрофою становить 0.25 одиниці.",
+        correctChoice: "meter",
+        explanation: "<b>Правильний вибір: Електронний pH-метр!</b><br>Для аналізу крові помилка у ±0.5 недопустима, адже вона вирішує питання життя і смерті! Тут потрібна хірургічна точність до 0.01 одиниці."
+      },
+      {
+        id: 3,
+        category: "ГАТУНОК СТИХІЇ: ХАРЧОВА ПРОМИСЛОВІСТЬ",
+        title: "Операція 3: Контроль скисання молока на фермі",
+        sampleName: "Парне молоко (ферма)",
+        exactPH: "6.35",
+        paperColor: "bg-yellow-400 text-black",
+        description: "Технолог приймає цистерну з молоком від фермерського господарства. Норма свіжого молока має pH = 6.8. При накопиченні молочної кислоти pH падає до 6.2–6.4.",
+        requirement: "Швидка експрес-перевірка під час завантаження на вулиці.",
+        correctChoice: "paper",
+        explanation: "<b>Правильний вибір: Паперовий індикатор!</b><br>Стрічка універсального індикатора миттєво покаже зміну кольору від зеленого до жовтуватого, сигналізуючи про початок скисання без зайвих затримок."
+      },
+      {
+        id: 4,
+        category: "ГАТУНОК СТИХІЇ: НАУКОВА ЛАБОРАТОРІЯ",
+        title: "Операція 4: Титрування та реакція нейтралізації",
+        sampleName: "Розчин NaOH + HCl",
+        exactPH: "7.01",
+        paperColor: "bg-emerald-500 text-white",
+        description: "Науковець доливає хлоридну кислоту до розчину натрій гідроксиду. Обидва розчини безбарвні. Потрібно зафіксувати момент ТОЧНОЇ нейтралізації (pH = 7.00).",
+        requirement: "Фіксація непомітної для ока точної точки еквівалентності.",
+        correctChoice: "meter",
+        explanation: "<b>Правильний вибір: Електронний pH-метр!</b><br>При титруванні додавання лише однієї зайвої краплі кислоти викликає різкий стрибок pH з 10 до 3. Індикаторний папір не дозволить простежити плавний графік титрування."
+      },
+      {
+        id: 5,
+        category: "ГАТУНОК СТИХІЇ: ЕКОЛОГІЧНИЙ МОНІТОРИНГ",
+        title: "Операція 5: Аналіз кислотного дощу у лісі",
+        sampleName: "Дощова вода (заповідник)",
+        exactPH: "4.10",
+        paperColor: "bg-red-500 text-white",
+        description: "Екологічний патруль перевіряє опади у заповіднику після промислового викиду. Норма дощової води pH ≈ 5.6. Потрібно з'ясувати, чи не стався «кислотний дощ» (pH < 4.5).",
+        requirement: "Експрес-вимірювання під дощем у польовому таборі.",
+        correctChoice: "paper",
+        explanation: "<b>Правильний вибір: Паперовий індикатор!</b><br>Для польового патруля індикаторний папір — ідеальний вибір. Він відразу покаже червоне забарвлення у разі виявлення агресивного кислотного дощу."
+      },
+      {
+        id: 6,
+        category: "ГАТУНОК СТИХІЇ: ФАРМАЦЕВТИКА",
+        title: "Операція 6: Синтез очейних крапель",
+        sampleName: "Буферний розчин для крапель",
+        exactPH: "7.39",
+        paperColor: "bg-teal-500 text-white",
+        description: "На фармацевтичному заводі створюють очні краплі. Очне яблуко надзвичайно чутливе: pH розчину має суворо дорівнювати 7.40 ± 0.05, щоб уникнути опіку слизової.",
+        requirement: "Суворе дотримання фармацевтичного стандарту якості.",
+        correctChoice: "meter",
+        explanation: "<b>Правильний вибір: Електронний pH-метр!</b><br>Фармацевтичне виробництво вимагає максимальної прецизійності. Найменша помилка індикатора може призвести до виготовлення бракованого лікувального засобу."
+      },
+      {
+        id: 7,
+        category: "ГАТУНОК СТИХІЇ: ПОБУТ ТА КОСМЕТОЛОГІЯ",
+        title: "Операція 7: Тестування нового шампуню для дітей",
+        sampleName: "Дитячий шампунь (партія №4)",
+        exactPH: "5.45",
+        paperColor: "bg-amber-400 text-black",
+        description: "Лаборант перевіряє дитячий шампунь із позначкою «Без сліз». Формула має бути слабокислою (pH ≈ 5.5), щоб відповідати природній мантії шкіри.",
+        requirement: "Первинна вхідна перевірка готової продукції на складі.",
+        correctChoice: "paper",
+        explanation: "<b>Правильний вибір: Паперовий індикатор!</b><br>Універсальний папірець легко відрізнить слабокислий шампунь (pH 5.5 — жовтувато-зелений) від лужного мила (pH 9.0 — синій)."
+      },
+      {
+        id: 8,
+        category: "ГАТУНОК СТИХІЇ: АКВАКУЛЬТУРА ТА ОКЕАНОЛОГІЯ",
+        title: "Операція 8: Дослідження інкубатора для коралів",
+        description: "Океанологи вирощують рідкісні корали в акваріумі. При закисленні води навіть на 0.1 одиниці (від pH 8.2 до 8.1) коралові поліпи зупиняють побудову вапнякового скелета.",
+        sampleName: "Морська вода інкубатора",
+        exactPH: "8.12",
+        paperColor: "bg-blue-600 text-white",
+        requirement: "Високоточний постійний моніторинг тонких біологічних зсувів.",
+        correctChoice: "meter",
+        explanation: "<b>Правильний вибір: Електронний pH-метр!</b><br>Зсуви pH у marine-екосистемах дуже незначні за амплітудою, але критичні за наслідками. Універсальний папір просто не помітить різницю між pH 8.2 та 8.1."
+      }
+    ];
+
+    class AccuracySimulatorApp {
+      constructor() {
+        this.currentIndex = 0;
+        this.score = 0;
+        this.userHistory = [];
+        this.isTesting = false; // Flag to prevent multiple rapid clicks
+
+        this.initDOM();
+        this.initEvents();
+        this.loadScenario(0);
+      }
+
+      initDOM() {
+        this.progressIndicator = document.getElementById('progress-indicator');
+        this.scoreIndicator = document.getElementById('score-indicator');
+        this.btnRestart = document.getElementById('btn-restart');
+        
+        this.caseCategory = document.getElementById('case-category');
+        this.caseTitle = document.getElementById('case-title');
+        this.caseTag = document.getElementById('case-tag');
+        this.caseDescription = document.getElementById('case-description');
+        this.caseRequirement = document.getElementById('case-requirement');
+
+        this.sampleName = document.getElementById('sample-name');
+        this.sampleStatus = document.getElementById('sample-status');
+        this.probeVisual = document.getElementById('probe-visual');
+        this.probeText = document.getElementById('probe-text');
+
+        this.btnPaper = document.getElementById('btn-choice-paper');
+        this.btnMeter = document.getElementById('btn-choice-meter');
+
+        this.feedbackModal = document.getElementById('feedback-modal');
+        this.feedbackTitle = document.getElementById('feedback-title');
+        this.feedbackStamp = document.getElementById('feedback-stamp');
+        this.feedbackBody = document.getElementById('feedback-body');
+        this.btnNext = document.getElementById('btn-next');
+
+        this.summaryModal = document.getElementById('summary-modal');
+        this.summaryScore = document.getElementById('summary-score');
+        this.summaryRank = document.getElementById('summary-rank');
+        this.summaryList = document.getElementById('summary-list');
+      }
+
+      initEvents() {
+        this.btnRestart.addEventListener('click', () => location.reload());
+        this.btnNext.addEventListener('click', () => this.nextScenario());
+      }
+
+      loadScenario(index) {
+        this.isTesting = false;
+        this.toggleButtons(true);
+
+        // RESET TESTING VISUALS & BUTTONS FOR NEW SCENARIO
+        const dippedContainer = document.getElementById('dipped-instrument-container');
+        if (dippedContainer) {
+          dippedContainer.innerHTML = '';
+          dippedContainer.className = "absolute inset-0 z-20 flex items-end justify-center pb-2 pointer-events-none opacity-0";
+        }
+
+        const manualBtn = document.getElementById('btn-manual-verdict');
+        if (manualBtn) {
+          manualBtn.classList.add('hidden');
+          manualBtn.classList.remove('animate-pulse');
+        }
+
+        const scenario = SCENARIOS[index];
+        this.progressIndicator.textContent = `${index + 1} / ${SCENARIOS.length}`;
+        this.scoreIndicator.textContent = this.score;
+
+        this.caseCategory.textContent = scenario.category;
+        this.caseTitle.textContent = scenario.title;
+        this.caseTag.textContent = `Справа #${scenario.id}/${SCENARIOS.length}`;
+        this.caseDescription.textContent = scenario.description;
+        this.caseRequirement.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500"></i><span>Вимога: ${scenario.requirement}</span>`;
+
+        this.sampleName.textContent = scenario.sampleName;
+        this.sampleStatus.textContent = "Очікує підключення інструмента...";
+        this.probeVisual.innerHTML = '<i class="fa-solid fa-vial-virus text-stone-600"></i>';
+        this.probeText.textContent = "Оберіть інструмент нижче для занурення у розчин";
+      }
+
+      toggleButtons(enable) {
+        this.btnPaper.disabled = !enable;
+        this.btnMeter.disabled = !enable;
+        if (enable) {
+          this.btnPaper.classList.remove('opacity-50', 'cursor-not-allowed');
+          this.btnMeter.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+          this.btnPaper.classList.add('opacity-50', 'cursor-not-allowed');
+          this.btnMeter.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+      }
+
+      makeChoice(choice) {
+        if (this.isTesting) return;
+        this.isTesting = true;
+        this.toggleButtons(false);
+
+        const currentScenario = SCENARIOS[this.currentIndex];
+        const isCorrect = choice === currentScenario.correctChoice;
+
+        const dippedContainer = document.getElementById('dipped-instrument-container');
+        const manualBtn = document.getElementById('btn-manual-verdict');
+        manualBtn.classList.add('hidden');
+
+        // Step 1: Real Visual 2D Dip Animation inside Flask
+        dippedContainer.className = "absolute inset-0 z-20 flex items-end justify-center pb-2 pointer-events-none anim-dip-probe";
+
+        if (choice === 'paper') {
+          // Render Paper Strip dipped in solution
+          dippedContainer.innerHTML = `
+            <div class="w-5 h-24 bg-amber-400 border border-amber-600 rounded-t shadow-lg flex flex-col justify-end overflow-hidden">
+              <div class="w-full h-12 ${currentScenario.paperColor} anim-paper-soak border-t border-amber-600/40 flex items-center justify-center text-[10px] font-mono font-bold">
+                pH~${Math.round(parseFloat(currentScenario.exactPH))}
+              </div>
+            </div>
+          `;
+
+          this.sampleStatus.textContent = "Смужка занурена! Рідина просочує шар індикаторів...";
+          this.probeVisual.innerHTML = `<i class="fa-solid fa-note-sticky text-amber-400 text-4xl animate-bounce"></i>`;
+          this.probeText.innerHTML = `<span class="text-amber-300 font-bold">Тест папером завершено!</span><br>Колір змінився на відповідне забарвлення pH ≈ ${Math.round(parseFloat(currentScenario.exactPH))}`;
+
+        } else {
+          // Render Digital Electrode Probe dipped in solution
+          dippedContainer.innerHTML = `
+            <div class="flex flex-col items-center">
+              <!-- Digital Meter Body -->
+              <div class="w-14 h-12 bg-stone-800 border-2 border-blue-400 rounded-t-lg p-1 flex flex-col items-center justify-center shadow-2xl">
+                <div class="w-full h-6 bg-blue-950 border border-blue-700 rounded text-blue-200 font-mono font-bold text-[11px] flex items-center justify-center anim-lcd-read">
+                  ${currentScenario.exactPH}
+                </div>
+              </div>
+              <!-- Glass Probe Tube -->
+              <div class="w-2.5 h-14 bg-gradient-to-b from-stone-400 to-blue-200/60 border border-stone-500 rounded-b-full"></div>
+            </div>
+          `;
+
+          this.sampleStatus.textContent = "Електрод занурено! Зчитування потенціалу йона H⁺...";
+          this.probeVisual.innerHTML = `<i class="fa-solid fa-gauge-high text-blue-400 text-4xl animate-bounce"></i>`;
+          this.probeText.innerHTML = `<span class="text-blue-300 font-bold">Прецизійний тест завершено!</span><br>На екрані зафіксовано exact-значення: <b class="font-mono text-sm">pH ${currentScenario.exactPH}</b>`;
+        }
+
+        // Record history stats
+        if (isCorrect) {
+          this.score += 1;
+          this.scoreIndicator.textContent = this.score;
+        }
+
+        this.userHistory.push({
+          scenario: currentScenario,
+          userChoice: choice,
+          isCorrect: isCorrect
+        });
+
+        // Step 2: Show manual "View Verdict" button so user controls the transition!
+        setTimeout(() => {
+          manualBtn.classList.remove('hidden');
+          manualBtn.classList.add('animate-pulse');
+        }, 1200);
+      }
+
+      showVerdictModal() {
+        const currentScenario = SCENARIOS[this.currentIndex];
+        const lastRecord = this.userHistory[this.userHistory.length - 1];
+        const isCorrect = lastRecord.isCorrect;
+
+        this.feedbackTitle.textContent = isCorrect ? "ВЕРДИКТ ПІДТВЕРДЖЕНО!" : "ПОМИЛКА У ВИБОРІ ІНСТРУМЕНТА";
+        this.feedbackBody.innerHTML = currentScenario.explanation;
+
+        if (isCorrect) {
+          this.feedbackStamp.textContent = "УСПІХ";
+          this.feedbackStamp.className = "font-stamp text-lg px-3 py-1 border-2 rounded tracking-wider uppercase border-emerald-500 text-emerald-400 bg-emerald-950/80";
+        } else {
+          this.feedbackStamp.textContent = "ХИБНА ДІЯ";
+          this.feedbackStamp.className = "font-stamp text-lg px-3 py-1 border-2 rounded tracking-wider uppercase border-red-500 text-red-400 bg-red-950/80";
+        }
+
+        this.feedbackModal.classList.remove('hidden');
+      }
+
+      nextScenario() {
+        this.feedbackModal.classList.add('hidden');
+        this.currentIndex += 1;
+
+        if (this.currentIndex < SCENARIOS.length) {
+          this.loadScenario(this.currentIndex);
+        } else {
+          this.showFinalSummary();
+        }
+      }
+
+      showFinalSummary() {
+        this.summaryScore.textContent = `${this.score} / ${SCENARIOS.length}`;
+
+        const rankEl = this.summaryRank;
+        if (this.score === 8) {
+          rankEl.textContent = "ШЕФ КРИМІНАЛІСТИКИ (100%)";
+          rankEl.className = "text-xl font-bold font-detective text-emerald-400 mt-1";
+        } else if (this.score >= 6) {
+          rankEl.textContent = "СТАРШИЙ ЕКСПЕРТ-ХІМІК";
+          rankEl.className = "text-xl font-bold font-detective text-amber-400 mt-1";
+        } else {
+          rankEl.textContent = "СТАЖЕР ЛАБОРАТОРІЇ";
+          rankEl.className = "text-xl font-bold font-detective text-red-400 mt-1";
+        }
+
+        this.summaryList.innerHTML = '';
+        this.userHistory.forEach((item, i) => {
+          const row = document.createElement('div');
+          row.className = `p-3 rounded-lg border text-xs flex justify-between items-center ${
+            item.isCorrect ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-200' : 'bg-red-950/40 border-red-800/60 text-red-200'
+          }`;
+          row.innerHTML = `
+            <div class="flex items-center gap-2">
+              <i class="fa-solid ${item.isCorrect ? 'fa-circle-check text-emerald-400' : 'fa-circle-xmark text-red-400'}"></i>
+              <span class="font-bold">${i + 1}. ${item.scenario.title}</span>
+            </div>
+            <span class="font-mono text-[11px] opacity-80">${item.isCorrect ? '+1 бал' : '0 балів'}</span>
+          `;
+          this.summaryList.appendChild(row);
+        });
+
+        this.summaryModal.classList.remove('hidden');
+      }
+    }
+
+    let app;
+    window.onload = function() {
+      app = new AccuracySimulatorApp();
+    };
+  </script>
+</body>
+</html>
